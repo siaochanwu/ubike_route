@@ -1,20 +1,48 @@
 <template>
-	<div class="container mx-auto relative">
-		<h1>www</h1>
-		<div id="map" class="h-96 z-0">
+	<div class="container mx-auto relative font-mono">
+		<div class="container mx-auto p-5 bg-purple-600 bg-opacity-80">
+			<nav class="md:flex md:justify-between">
+				<div class="flex justify-between">
+					<a href="#" class="font-bold text-2xl text-white" >Formosa</a>
+					<p id="hamburgerbtn" class="md:hidden text-white" ><i class="fas fa-search text-2xl"></i></p>
+				</div>
+				<div class="hidden md:block">
+					<input type="text" class="py-1 px-4 rounded-full" placeholder="搜尋地點、餐廳">
+				</div>
+				<ul class="hidden md:flex md:flex-row" id="mobileMenu">
+					<li class="pr-5 text-white text-2xl font-bold" @click="sideOpen = false"><a href="#">Youbike租借</a></li>
+					<li class="pr-5 text-white text-2xl font-bold" @click="sideOpen = true"><a href="#">自行車路線</a></li>
+				</ul>
+			</nav>
 		</div>
-		<div class="bg-red-200 z-10 h-40 w-40 absolute top-0 left-0 transition-all duration-300" :class="{ '-ml-40': !sideOpen }">
-			<div class="absolute top-1/2 -right-5 transform -translate-y-1/2 animate-pulse" @click="sideOpen = !sideOpen">>>></div>
-			<div>
-				<h1>地區選擇</h1>
-				<select name="" id="" v-model="selectCountry">
-					<option :value="item.value"  v-for="item in country" :key="item.value">{{ item.name }}</option>
+		<div id="map" class="h-screen z-0">
+		</div>
+		<div class="bg-purple-300 z-10 h-screen w-80 absolute top-2 left-0 transition-all duration-300 mt-16 " :class="{ '-ml-80': !sideOpen }">
+			<div class="absolute top-1/2 -right-9 transform -translate-y-1/2" @click="sideOpen = !sideOpen"><i class="fas fa-caret-right text-8xl text-yellow-500"></i></div>
+			<div class="flex flex-col">
+				<h1 class="text-3xl text-white font-bold my-10">路線查詢</h1>
+				<input type="text" placeholder="請輸入路線關鍵字" class="rounded-full py-2 px-4 my-2 w-10/12 mx-auto">
+				<select name="" id="" v-model="selectCountry" class="rounded-full py-2 px-4 my-2 w-10/12 mx-auto">
+					<option value="">選擇縣市</option>
+					<option :value="item.value" v-for="item in country" :key="item.value">{{ item.name }}</option>
 				</select>
-				<h1>路線選擇</h1>
-				<select name="" id="" class="w-10/12" v-model="selectRoute">
+				<select name="" id="" class="w-10/12 rounded-full py-2 px-4 my-2 mx-auto" v-model="selectRoute">
+					<option value="">選擇路線</option>
 					<option :value="item.RouteName" v-for="item in route" :key="item.AuthorityName">{{ item.RouteName }}</option>
 				</select>
 			</div>
+			<hr>
+			<div class="my-5 overflow-y-scroll">
+				<div v-for="item in route" :key="item.RouteName" class="bg-white w-10/12 mx-auto my-2 rounded-lg p-3 text-left">
+					<h1 class="text-2xl font-bold">{{ item.RouteName }}</h1>
+					<p>全長: {{ item.CyclingLength }} 公里</p>
+					<b><i class="fas fa-map-marker-alt mr-2"></i>{{ item.City }}</b>
+				</div>
+			</div>
+		</div>
+		<div class="footer md:hidden flex justify-around items-center fixed bottom-0 bg-purple-500 w-full h-12">
+			<span class="text-white font-bold text-xl" @click="sideOpen = false">Youbike租借</span>
+			<span class="text-white font-bold text-xl" @click="sideOpen = true">自行車路線</span>
 		</div>
 	</div>
 </template>
@@ -41,18 +69,21 @@ export default {
 				PositionLon: number
 			},
 			AvailableRentBikes: number,
-			AvailableReturnBikes: number
+			AvailableReturnBikes: number,
+			UpdateTime: string
 		}
 		interface routeData {
 			AuthorityName: string,
 			RouteName: string,
-			Geometry: string
+			Geometry: string,
+			City: string,
+			CyclingLength: number
 		}
 
 		const stationData = ref<data[]>([])
 		const availableBike = ref<data[]>([])
 		const filterData = ref<data[]>([])
-		const sideOpen = ref(true)
+		const sideOpen = ref(false)
 		const country = ref([
 			{
                 name: "臺中市",
@@ -243,10 +274,14 @@ export default {
 			data.forEach(item => {
 				let marker = L.marker([item.StationPosition.PositionLat, item.StationPosition.PositionLon], {icon: myIcon}).addTo(mymap);
 				marker.bindPopup(`
+					<b class="text-gray-500">YouBike 1.0</b><br>
 					<b class="text-xl">${item.StationName.Zh_tw}</b><br>
 					<b>地點:${item.StationAddress.Zh_tw}</b><br>
-					<b class="text-red-600">可租借數量:${item.AvailableRentBikes}</b><br>
-					<b class="text-red-600">可租借數量:${item.AvailableReturnBikes}</b>
+					<div class="flex justify-between my-2">
+						<span class="bg-yellow-500 py-1 px-4 rounded-lg"><b class="text-white font-bold text-lg">可借 ${item.AvailableRentBikes}</b></span>
+						<span class="bg-yellow-400 py-1 px-4 rounded-lg"><b class="text-white font-bold text-lg">可停 ${item.AvailableReturnBikes}</b></span>
+					</div>
+					<b class="mt-2 text-gray-500">更新時間 : ${item.UpdateTime.split('T')[0]} ${item.UpdateTime.split('T')[1].split('+')[0]}</b>
 				`)
 			})
 		}
