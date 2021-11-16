@@ -13,8 +13,9 @@ import { ref, onMounted } from "vue";
 
 export default {
 	setup() {
+
 		const stationData = ref([])
-		let mymap = ref(null)
+		let mymap = ref<any>('')
 
 		//取得當下位置
 		function getLocation() {
@@ -55,9 +56,9 @@ export default {
 		//憑證
         function getAuthorizationHeader() {
             let AppID = import.meta.env.VITE_APP_ID;
-            let AppKey = import.meta.env.VITE_APP_KEY;
+            let AppKey: any = import.meta.env.VITE_APP_KEY;
 
-            let GMTString = new Date().toGMTString();
+            let GMTString = new Date().toUTCString();
             let ShaObj = new jsSHA('SHA-1', 'TEXT');
             ShaObj.setHMACKey(AppKey, 'TEXT');
             ShaObj.update('x-date: ' + GMTString);
