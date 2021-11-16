@@ -10,7 +10,8 @@
     "jssha": "^3.2.0",
     "leaflet": "^1.7.1",
     "vue": "^3.2.16",
-    "vue-router": "^4.0.12"
+    "vue-router": "^4.0.12",
+    "wicket": "^1.3.8"
   },
   "devDependencies": {
     "@types/leaflet": "^1.7.6",
