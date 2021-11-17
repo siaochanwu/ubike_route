@@ -1,6 +1,6 @@
 <template>
-	<div class="container mx-auto relative font-mono">
-		<div class="container mx-auto p-5 bg-purple-600 bg-opacity-80">
+	<div class="mx-auto relative font-mono">
+		<div class="mx-auto p-5 bg-purple-600 bg-opacity-80">
 			<nav class="md:flex md:justify-between">
 				<div class="flex justify-between">
 					<a href="#" class="font-bold text-2xl text-white" >Formosa</a>
@@ -17,10 +17,10 @@
 		</div>
 		<div id="map" class="h-screen z-0">
 		</div>
-		<div class="bg-purple-300 z-10 h-screen w-80 absolute top-2 left-0 transition-all duration-300 mt-16 " :class="{ '-ml-80': !sideOpen }">
+		<div class="bg-purple-300 z-10 h-full w-80 absolute top-2 left-0 transition-all duration-300 mt-16 " :class="{ '-ml-80': !sideOpen }">
 			<div class="absolute top-1/2 -right-9 transform -translate-y-1/2" @click="sideOpen = !sideOpen"><i class="fas fa-caret-right text-8xl text-yellow-500"></i></div>
 			<div class="flex flex-col">
-				<h1 class="text-3xl text-white font-bold my-10">路線查詢</h1>
+				<h1 class="text-3xl text-white font-bold my-5">路線查詢</h1>
 				<input type="text" placeholder="請輸入路線關鍵字" class="rounded-full py-2 px-4 my-2 w-10/12 mx-auto">
 				<select name="" id="" v-model="selectCountry" class="rounded-full py-2 px-4 my-2 w-10/12 mx-auto">
 					<option value="">選擇縣市</option>
@@ -32,8 +32,8 @@
 				</select>
 			</div>
 			<hr>
-			<div class="my-5 overflow-y-scroll">
-				<div v-for="item in route" :key="item.RouteName" class="bg-white w-10/12 mx-auto my-2 rounded-lg p-3 text-left">
+			<div class="my-5 overflow-y-auto h-1/2">
+				<div v-for="item in route" :key="item.RouteName" class="bg-white w-10/12 mx-auto my-2 rounded-lg p-3 text-left" @click="routeClick(item.RouteName)">
 					<h1 class="text-2xl font-bold">{{ item.RouteName }}</h1>
 					<p>全長: {{ item.CyclingLength }} 公里</p>
 					<b><i class="fas fa-map-marker-alt mr-2"></i>{{ item.City }}</b>
@@ -82,7 +82,10 @@ export default {
 
 		const stationData = ref<data[]>([])
 		const availableBike = ref<data[]>([])
+		const cityStationData = ref<data[]>([])
+		const cityAvailableBike = ref<data[]>([])
 		const filterData = ref<data[]>([])
+		const cityBikeData = ref<data[]>([])
 		const sideOpen = ref(false)
 		const country = ref([
 			{
@@ -175,11 +178,15 @@ export default {
 		//取得當下位置
 		function getLocation() {
 			mymap = L.map('map').setView([0, 0], 15)
+			console.log(mymap)
+			mymap.locate({setView: true, watch: true});
+
 			if (navigator.geolocation) {
 				navigator.geolocation.getCurrentPosition(
 					function (position) {
 						const lng = position.coords.longitude; //經度
 						const lat = position.coords.latitude; //緯度
+
 						mymap.setView([lat, lng], 15); //注意順序!!
 
 						L.tileLayer(
@@ -223,9 +230,9 @@ export default {
             return { 'Authorization': Authorization, 'X-Date': GMTString }; 
         }
 
-		//get station data
+		//get nearby station data
 		function getStation(lat:number, lng:number) {
-			fetch(`https://ptx.transportdata.tw/MOTC/v2/Bike/Station/NearBy?&format=JSON&$spatialFilter=nearby(${lat},${lng}, 500)`,{
+			fetch(`https://ptx.transportdata.tw/MOTC/v2/Bike/Station/NearBy?&format=JSON&$spatialFilter=nearby(${lat},${lng}, 1000)`,{
 				headers: getAuthorizationHeader()
 			})
 			.then(res => res.json())
@@ -235,9 +242,9 @@ export default {
 			})
 		}
 
-		//get available data
+		//get nearby available data
 		function getAvailableBike(lat:number, lng:number) {
-			fetch(`https://ptx.transportdata.tw/MOTC/v2/Bike/Availability/NearBy?&format=JSON&$spatialFilter=nearby(${lat},${lng}, 500)`,{
+			fetch(`https://ptx.transportdata.tw/MOTC/v2/Bike/Availability/NearBy?&format=JSON&$spatialFilter=nearby(${lat},${lng}, 1000)`,{
 				headers: getAuthorizationHeader()
 			})
 			.then(res => res.json())
@@ -254,14 +261,50 @@ export default {
 						}
 					}
 				}
-				console.log('filter:', filterData.value)
+				// console.log('filter:', filterData.value)
 				setMarker(filterData.value)
+			})
+		}
+
+		//get nearby station data
+		function getCityStation(selectCountry:string) {
+			fetch(`https://ptx.transportdata.tw/MOTC/v2/Bike/Station/${selectCountry}?&format=JSON)`,{
+				headers: getAuthorizationHeader()
+			})
+			.then(res => res.json())
+			.then(data => {
+				console.log(data)
+				cityStationData.value = data
+			})
+		}
+
+		//get nearby available data
+		function getCityAvailableBike(selectCountry:string) {
+			fetch(`https://ptx.transportdata.tw/MOTC/v2/Bike/Availability/${selectCountry}?&format=JSON)`,{
+				headers: getAuthorizationHeader()
+			})
+			.then(res => res.json())
+			.then(data => {
+				console.log(data)
+				cityAvailableBike.value = data
+				for (let i = 0; i < cityAvailableBike.value.length; i++) {
+					for (let j = 0; j < cityStationData.value.length; j++) {
+						if (cityAvailableBike.value[i].StationUID == cityStationData.value[j].StationUID) {
+							cityAvailableBike.value[i].StationName = cityStationData.value[j].StationName;
+							cityAvailableBike.value[i].StationAddress = cityStationData.value[j].StationAddress;
+							cityAvailableBike.value[i].StationPosition = cityStationData.value[j].StationPosition;
+							cityBikeData.value.push(cityAvailableBike.value[i])
+						}
+					}
+				}
+				console.log('cityBikeData:', cityBikeData.value)
+				setMarker(cityBikeData.value)
 			})
 		}
 
 		//pin marker
 		function setMarker(data:data[]) {
-			console.log(data)
+			// console.log(data)
 			var myIcon = L.icon({ //修改marker樣式
 				iconUrl: 'https://yama.tw/wp-content/uploads/20190917100615_25.png',
 				iconSize: [38, 95],
@@ -288,13 +331,19 @@ export default {
 
 		//get route data
 		function getRoute(selectCountry:string) {
+			console.log(selectCountry)
+			cityStationData.value = []
+			cityAvailableBike.value = []
+			cityBikeData.value = []
 			fetch(`https://ptx.transportdata.tw/MOTC/v2/Cycling/Shape/${selectCountry}?&format=JSON`,{
 				headers: getAuthorizationHeader()
 			})
 			.then(res => res.json())
 			.then(data => {
-				console.log(data)
+				// console.log(data)
 				route.value = data
+				getCityStation(selectCountry)
+				getCityAvailableBike(selectCountry)
 			})
 		}
 
@@ -311,7 +360,6 @@ export default {
 		//draw polygon
 		function polygon(geo:string) {
 			mymap.removeLayer(myLayer)
-			console.log(typeof myLayer)
 			const wicket = new Wkt.Wkt();
 			const geojsonFeature = wicket.read(geo).toJson()
 			const myStyle = {
@@ -325,6 +373,10 @@ export default {
 
 			myLayer.addData(geojsonFeature)
 			mymap.fitBounds(myLayer.getBounds());
+		}
+
+		function routeClick(route:string) {
+			selectRoute.value = route
 		}
 
 		watch(selectCountry, (newVal, oldVal) => {
@@ -352,8 +404,12 @@ export default {
 			selectCountry,
 			route,
 			selectRoute,
+			cityStationData,
+			cityAvailableBike,
+			cityBikeData,
 			showRoute,
 			polygon,
+			routeClick,
 		};
 	},
 };
@@ -367,6 +423,8 @@ export default {
 	text-align: center;
 	color: #2c3e50;
 	width: 100%;
+	height: 100%;
+	overflow: hidden;
 	/* margin-top: 60px; */
 }
 
