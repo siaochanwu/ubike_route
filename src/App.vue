@@ -1,6 +1,7 @@
 <template>
-	<div class="mx-auto relative font-mono">
-		<div class="mx-auto p-5 bg-purple-600 bg-opacity-80">
+	<div class="mx-auto relative font-mono h-full">
+		<!-- <div class="absolute top-0 left-0 right-0 z-20">ww</div> -->
+		<div class="mx-auto p-5 bg-purple-600 bg-opacity-90 absolute top-0 left-0 right-0 z-20">
 			<nav class="md:flex md:justify-between">
 				<div class="flex justify-between">
 					<a href="#" class="font-bold text-2xl text-white" >Formosa</a>
@@ -174,6 +175,7 @@ export default {
 		const selectRoute = ref('')
 		let mymap = ref<any>('')
 		let myLayer = ref<any>(null)
+		let markers = ref<any>(null)
 
 		//取得當下位置
 		function getLocation() {
@@ -273,38 +275,35 @@ export default {
 			})
 			.then(res => res.json())
 			.then(data => {
-				console.log(data)
+				// console.log(data)
 				cityStationData.value = data
-			})
-		}
-
-		//get nearby available data
-		function getCityAvailableBike(selectCountry:string) {
-			fetch(`https://ptx.transportdata.tw/MOTC/v2/Bike/Availability/${selectCountry}?&format=JSON)`,{
+				fetch(`https://ptx.transportdata.tw/MOTC/v2/Bike/Availability/${selectCountry}?&format=JSON)`,{
 				headers: getAuthorizationHeader()
-			})
-			.then(res => res.json())
-			.then(data => {
-				console.log(data)
-				cityAvailableBike.value = data
-				for (let i = 0; i < cityAvailableBike.value.length; i++) {
-					for (let j = 0; j < cityStationData.value.length; j++) {
-						if (cityAvailableBike.value[i].StationUID == cityStationData.value[j].StationUID) {
-							cityAvailableBike.value[i].StationName = cityStationData.value[j].StationName;
-							cityAvailableBike.value[i].StationAddress = cityStationData.value[j].StationAddress;
-							cityAvailableBike.value[i].StationPosition = cityStationData.value[j].StationPosition;
-							cityBikeData.value.push(cityAvailableBike.value[i])
+				})
+				.then(res => res.json())
+				.then(data => {
+					// console.log(data)
+					cityAvailableBike.value = data
+					for (let i = 0; i < cityAvailableBike.value.length; i++) {
+						for (let j = 0; j < cityStationData.value.length; j++) {
+							if (cityAvailableBike.value[i].StationUID == cityStationData.value[j].StationUID) {
+								cityAvailableBike.value[i].StationName = cityStationData.value[j].StationName;
+								cityAvailableBike.value[i].StationAddress = cityStationData.value[j].StationAddress;
+								cityAvailableBike.value[i].StationPosition = cityStationData.value[j].StationPosition;
+								cityBikeData.value.push(cityAvailableBike.value[i])
+							}
 						}
 					}
-				}
-				console.log('cityBikeData:', cityBikeData.value)
-				setMarker(cityBikeData.value)
+					setMarker(cityBikeData.value)
+				})
 			})
 		}
 
 		//pin marker
 		function setMarker(data:data[]) {
-			// console.log(data)
+			mymap.removeLayer(markers) //清除markers
+			markers = L.layerGroup().addTo(mymap);
+			var marker;
 			var myIcon = L.icon({ //修改marker樣式
 				iconUrl: 'https://yama.tw/wp-content/uploads/20190917100615_25.png',
 				iconSize: [38, 95],
@@ -315,7 +314,7 @@ export default {
 				shadowAnchor: [22, 94]
 			});
 			data.forEach(item => {
-				let marker = L.marker([item.StationPosition.PositionLat, item.StationPosition.PositionLon], {icon: myIcon}).addTo(mymap);
+				marker = L.marker([item.StationPosition.PositionLat, item.StationPosition.PositionLon], {icon: myIcon}).addTo(markers);
 				marker.bindPopup(`
 					<b class="text-gray-500">YouBike 1.0</b><br>
 					<b class="text-xl">${item.StationName.Zh_tw}</b><br>
@@ -326,12 +325,13 @@ export default {
 					</div>
 					<b class="mt-2 text-gray-500">更新時間 : ${item.UpdateTime.split('T')[0]} ${item.UpdateTime.split('T')[1].split('+')[0]}</b>
 				`)
+				markers.addLayer(marker)
 			})
+			mymap.addLayer(markers)
 		}
 
 		//get route data
 		function getRoute(selectCountry:string) {
-			console.log(selectCountry)
 			cityStationData.value = []
 			cityAvailableBike.value = []
 			cityBikeData.value = []
@@ -343,7 +343,6 @@ export default {
 				// console.log(data)
 				route.value = data
 				getCityStation(selectCountry)
-				getCityAvailableBike(selectCountry)
 			})
 		}
 
@@ -407,6 +406,7 @@ export default {
 			cityStationData,
 			cityAvailableBike,
 			cityBikeData,
+			markers,
 			showRoute,
 			polygon,
 			routeClick,
