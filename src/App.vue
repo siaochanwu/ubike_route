@@ -8,7 +8,7 @@
 					<p id="hamburgerbtn" class="md:hidden text-white" ><i class="fas fa-search text-2xl"></i></p>
 				</div>
 				<div class="hidden md:block">
-					<input type="text" class="py-1 px-4 rounded-full" placeholder="搜尋地點、餐廳">
+					<!-- <input type="text" class="py-1 px-4 rounded-full" placeholder="搜尋地點、餐廳"> -->
 				</div>
 				<ul class="hidden md:flex md:flex-row" id="mobileMenu">
 					<li class="pr-5 text-white text-2xl font-bold" @click="sideOpen = false"><a href="#">Youbike租借</a></li>
@@ -19,10 +19,12 @@
 		<div id="map" class="h-screen z-0">
 		</div>
 		<div class="bg-purple-300 z-10 h-full w-80 absolute top-2 left-0 transition-all duration-300 mt-16 " :class="{ '-ml-80': !sideOpen }">
-			<div class="absolute top-1/2 -right-9 transform -translate-y-1/2" @click="sideOpen = !sideOpen"><i class="fas fa-caret-right text-8xl text-yellow-500"></i></div>
+			<div class="absolute top-1/3 -right-10 transform -translate-y-1/2 bg-yellow-500 h-20 w-10 rounded-tr-lg rounded-br-lg" @click="sideOpen = !sideOpen">
+				<i class="fas fa-chevron-right text-2xl absolute top-1/3 left-0 right-0 text-white hover:text-yellow-800 animate-pulse"></i>
+			</div>
 			<div class="flex flex-col">
 				<h1 class="text-3xl text-white font-bold my-5">路線查詢</h1>
-				<input type="text" placeholder="請輸入路線關鍵字" class="rounded-full py-2 px-4 my-2 w-10/12 mx-auto">
+				<input type="text" placeholder="請輸入路線關鍵字" class="rounded-full py-2 px-4 my-2 w-10/12 mx-auto" v-model="search">
 				<select name="" id="" v-model="selectCountry" class="rounded-full py-2 px-4 my-2 w-10/12 mx-auto">
 					<option value="">選擇縣市</option>
 					<option :value="item.value" v-for="item in country" :key="item.value">{{ item.name }}</option>
@@ -173,6 +175,7 @@ export default {
 		const selectCountry = ref('')
 		const route = ref<routeData[]>([])
 		const selectRoute = ref('')
+		const search = ref<string>("")
 		let mymap = ref<any>('')
 		let myLayer = ref<any>(null)
 		let markers = ref<any>(null)
