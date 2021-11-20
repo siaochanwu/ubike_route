@@ -191,7 +191,7 @@ export default {
 					function (position) {
 						const lng = position.coords.longitude; //經度
 						const lat = position.coords.latitude; //緯度
-
+						
 						mymap.setView([lat, lng], 15); //注意順序!!
 
 						L.tileLayer(
@@ -218,6 +218,8 @@ export default {
 						console.error(dd)
 					}
 				)
+			} else {
+				mymap.setView([25.0320923, 121.5680546], 15);
 			}
 		}
 
