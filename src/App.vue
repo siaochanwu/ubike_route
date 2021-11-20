@@ -5,14 +5,14 @@
 			<nav class="md:flex md:justify-between">
 				<div class="flex justify-between">
 					<a href="#" class="font-bold text-2xl text-white" >Formosa</a>
-					<p id="hamburgerbtn" class="md:hidden text-white" ><i class="fas fa-search text-2xl"></i></p>
+					<p id="hamburgerbtn" class="md:hidden text-white" @click="sideOpen = !sideOpen"><i class="fas fa-search text-2xl"></i></p>
 				</div>
 				<div class="hidden md:block">
 					<!-- <input type="text" class="py-1 px-4 rounded-full" placeholder="搜尋地點、餐廳"> -->
 				</div>
 				<ul class="hidden md:flex md:flex-row" id="mobileMenu">
-					<li class="pr-5 text-white text-2xl font-bold" @click="sideOpen = false"><a href="#">Youbike租借</a></li>
-					<li class="pr-5 text-white text-2xl font-bold" @click="sideOpen = true"><a href="#">自行車路線</a></li>
+					<li class="pr-5 text-white text-2xl font-bold " @click="sideOpen = false" :class="{ 'underline': !sideOpen }"><a href="#">Youbike租借</a></li>
+					<li class="pr-5 text-white text-2xl font-bold" @click="sideOpen = true" :class="{ 'underline': sideOpen }"><a href="#">自行車路線</a></li>
 				</ul>
 			</nav>
 		</div>
@@ -24,7 +24,6 @@
 			</div>
 			<div class="flex flex-col">
 				<h1 class="text-3xl text-white font-bold my-5">路線查詢</h1>
-				<input type="text" placeholder="請輸入路線關鍵字" class="rounded-full py-2 px-4 my-2 w-10/12 mx-auto" v-model="search">
 				<select name="" id="" v-model="selectCountry" class="rounded-full py-2 px-4 my-2 w-10/12 mx-auto">
 					<option value="">選擇縣市</option>
 					<option :value="item.value" v-for="item in country" :key="item.value">{{ item.name }}</option>
@@ -33,17 +32,18 @@
 					<option value="">選擇路線</option>
 					<option :value="item.RouteName" v-for="item in route" :key="item.AuthorityName">{{ item.RouteName }}</option>
 				</select>
+				<input type="text" placeholder="請輸入路線關鍵字" class="rounded-full py-2 px-4 my-2 w-10/12 mx-auto" v-model="search">
 			</div>
 			<hr>
 			<div class="my-5 overflow-y-auto h-1/2">
-				<div v-for="item in route" :key="item.RouteName" class="bg-white w-10/12 mx-auto my-2 rounded-lg p-3 text-left" @click="routeClick(item.RouteName)">
+				<div v-for="item in ShowRoute" :key="item.RouteName" class="bg-white w-10/12 mx-auto my-2 rounded-lg p-3 text-left" @click="routeClick(item.RouteName)">
 					<h1 class="text-2xl font-bold">{{ item.RouteName }}</h1>
 					<p>全長: {{ item.CyclingLength }} 公里</p>
 					<b><i class="fas fa-map-marker-alt mr-2"></i>{{ item.City }}</b>
 				</div>
 			</div>
 		</div>
-		<div class="footer md:hidden flex justify-around items-center fixed bottom-0 bg-purple-500 w-full h-12">
+		<div class="footer md:hidden flex justify-around items-center fixed bottom-0 bg-purple-500 w-full h-12 z-20">
 			<span class="text-white font-bold text-xl" @click="sideOpen = false">Youbike租借</span>
 			<span class="text-white font-bold text-xl" @click="sideOpen = true">自行車路線</span>
 		</div>
@@ -55,7 +55,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import jsSHA from "jssha";
 import Wkt from 'wicket'
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 
 export default {
 	setup() {
@@ -175,7 +175,7 @@ export default {
 		const selectCountry = ref('')
 		const route = ref<routeData[]>([])
 		const selectRoute = ref('')
-		const search = ref<string>("")
+		const search = ref<string>('')
 		let mymap = ref<any>('')
 		let myLayer = ref<any>(null)
 		let markers = ref<any>(null)
@@ -397,6 +397,14 @@ export default {
 			getLocation();
 		});
 
+		const ShowRoute = computed(() => {
+			if (search.value !== '') {
+				return route.value.filter(item => item.RouteName.match(search.value))
+			} else {
+				return route.value
+			}
+		})
+
 		return {
 			stationData,
 			availableBike,
@@ -409,10 +417,12 @@ export default {
 			cityStationData,
 			cityAvailableBike,
 			cityBikeData,
+			search,
 			markers,
 			showRoute,
 			polygon,
 			routeClick,
+			ShowRoute
 		};
 	},
 };
