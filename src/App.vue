@@ -50,15 +50,13 @@
 	</div>
 </template>
 
-<script lang="ts">
+<script lang="ts" setup>
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import jsSHA from "jssha";
 import Wkt from 'wicket'
 import { ref, onMounted, watch, computed } from "vue";
 
-export default {
-	setup() {
 		interface data {
 			StationUID: string,
 			StationName: {
@@ -175,7 +173,7 @@ export default {
 		const selectCountry = ref('')
 		const route = ref<routeData[]>([])
 		const selectRoute = ref('')
-		const search = ref<string>('')
+		const search = ref('')
 		let mymap = ref<any>('')
 		let myLayer = ref<any>(null)
 		let markers = ref<any>(null)
@@ -406,28 +404,6 @@ export default {
 				return route.value
 			}
 		})
-
-		return {
-			stationData,
-			availableBike,
-			filterData,
-			sideOpen,
-			country,
-			selectCountry,
-			route,
-			selectRoute,
-			cityStationData,
-			cityAvailableBike,
-			cityBikeData,
-			search,
-			markers,
-			showRoute,
-			polygon,
-			routeClick,
-			ShowRoute
-		};
-	},
-};
 </script>
 
 <style>
